@@ -4,14 +4,14 @@
 // 3) version.json 永远网络优先
 // 4) 其他静态资源 stale-while-revalidate
 
-const CACHE = 'jzb-v12';
+const CACHE = 'jzb-v13';
 
 // 只预缓存最核心的（保证离线能开）
 const PRE_CACHE = [
   './',
-  'manifest.json',
-  'icon-192.png',
-  'icon-512.png',
+  'manifest.json?v=2',
+  'icon-192.png?v=2',
+  'icon-512.png?v=2',
 ];
 
 // 永远走网络的资源（避免缓存导致代码更新失败）
