@@ -4,7 +4,7 @@
 // 3) version.json 永远网络优先
 // 4) 其他静态资源 stale-while-revalidate
 
-const CACHE = 'jzb-v13';
+const CACHE = 'jzb-v14';
 
 // 只预缓存最核心的（保证离线能开）
 const PRE_CACHE = [
