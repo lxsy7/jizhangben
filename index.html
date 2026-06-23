@@ -361,6 +361,7 @@ tr:hover td{background:var(--bg)}
         <span style="font-size:13px;color:var(--sub)">当前版本：<b id="appVer" style="color:var(--pri)"></b></span>
         <button class="btn btn-out btn-sm" onclick="manualCheckUpdate()">🔄 检查更新</button>
         <button class="btn btn-out btn-sm" onclick="showChangelog()">📋 更新历史</button>
+        <button class="btn btn-out btn-sm" id="installAPK" style="display:none" onclick="downloadAPK()">📦 下载安装包</button>
         <button class="btn btn-out btn-sm" id="installPWA" style="display:none" onclick="installPWA()">📲 安装到主屏幕</button>
       </div>
       <p style="font-size:12px;color:var(--sub);margin-top:8px">
@@ -3602,6 +3603,41 @@ async function installPWA() {
   const { outcome } = await deferredInstallPrompt.userChoice;
   if (outcome === 'accepted') toast('安装中…');
   deferredInstallPrompt = null;
+}
+
+// ============ APK 下载安装（Android） ============
+(function() {
+  const ua = navigator.userAgent;
+  const isAndroid = /Android/i.test(ua);
+  if (isAndroid) {
+    const btn = document.getElementById('installAPK');
+    if (btn) btn.style.display = 'inline-flex';
+  }
+})();
+
+function downloadAPK() {
+  const btn = document.getElementById('installAPK');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 下载中…'; }
+  const url = 'https://lxsy7.github.io/jizhangben/app.apk';
+  fetch(url).then(r => {
+    if (!r.ok) throw new Error('下载失败');
+    return r.blob();
+  }).then(blob => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '记账本.apk';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+    toast('✅ 下载完成，打开文件即可安装');
+    if (btn) { btn.disabled = false; btn.textContent = '📦 下载安装包'; }
+  }).catch(() => {
+    // fallback: 直接跳转下载
+    window.open(url, '_blank');
+    toast('请在下载管理中打开文件安装');
+    if (btn) { btn.disabled = false; btn.textContent = '📦 下载安装包'; }
+  });
 }
 
 // PWA 文件导入 — 统一入口，解决 iOS Safari PWA onchange 不触发问题
