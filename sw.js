@@ -4,14 +4,14 @@
 // 3) version.json 永远网络优先
 // 4) 其他静态资源 stale-while-revalidate
 
-const CACHE = 'jzb-v14';
+const CACHE = 'jzb-v15';
 
 // 只预缓存最核心的（保证离线能开）
 const PRE_CACHE = [
   './',
-  'manifest.json?v=2',
-  'icon-192.png?v=2',
-  'icon-512.png?v=2',
+  'manifest-v2.json',
+  'icon-192.png?v=3',
+  'icon-512.png?v=3',
 ];
 
 // 永远走网络的资源（避免缓存导致代码更新失败）
@@ -19,6 +19,7 @@ const NETWORK_ONLY = [
   'index.html',
   'sw.js',
   'version.json',
+  'manifest-v2.json',
 ];
 
 self.addEventListener('message', e => {
