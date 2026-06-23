@@ -3400,8 +3400,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 <script>
 // ============ 版本与更新公告 ============
 // 当前版本号（每次更新手动 +1，并写更新内容到 RELEASE_NOTES）
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.2';
 const RELEASE_NOTES = [
+  { ver: '1.4.2', date: '2026-06-23', items: [
+    '【新功能】应用内直接下载安装包更新，无需手动删除重装',
+    '【修复】WebView 文件选择器支持，导入账单正常工作',
+  ]},
   { ver: '1.4.0', date: '2026-06-23', items: [
     '【Bug修复】RELEASE_NOTES 语法错误、pasteZone 引用错误、confirmImport event 崩溃',
     '【Bug修复】uid() 改用 crypto.randomUUID，消除批量导入碰撞',
@@ -3612,14 +3616,70 @@ async function installPWA() {
   if (isAndroid) {
     const btn = document.getElementById('installAPK');
     if (btn) btn.style.display = 'inline-flex';
+
+    // Auto-check for APK update (only in WebView with Java bridge)
+    if (window.Android && window.Android.getVersionCode) {
+      fetch('version.json?t=' + Date.now()).then(r => r.json()).then(info => {
+        if (!info.apkVersion) return;
+        const curCode = window.Android.getVersionCode();
+        const newCode = info.apkVersion.code;
+        if (newCode > curCode) {
+          showApkUpdatePrompt(info.apkVersion, window.Android.getVersionName());
+        }
+      }).catch(() => {});
+    }
   }
 })();
 
+function showApkUpdatePrompt(remote, curName) {
+  const m = document.createElement('div');
+  m.className = 'modal-mask';
+  m.id = 'apkUpdateModal';
+  m.innerHTML = `
+    <div class="modal-box" style="max-width:380px">
+      <h3 style="margin-bottom:12px">📦 安装包有新版本</h3>
+      <p style="font-size:14px;color:var(--sub);margin-bottom:14px">
+        当前：v${curName} → 最新：v${remote.name}<br>
+        <span style="font-size:12px">下载安装后可直接覆盖更新</span>
+      </p>
+      <div id="apkProgress" style="display:none;margin-bottom:12px">
+        <div style="background:#eee;height:6px;border-radius:3px;overflow:hidden">
+          <div id="apkProgressBar" style="background:var(--pri);height:100%;width:0%;transition:width .2s"></div>
+        </div>
+        <div id="apkProgressText" style="text-align:center;font-size:12px;color:var(--sub);margin-top:4px">0%</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-out" onclick="document.getElementById('apkUpdateModal').remove()">稍后</button>
+        <button class="btn btn-pri" id="apkDownloadBtn" onclick="startApkUpdate()">立即更新</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(m);
+}
+
+function startApkUpdate() {
+  const btn = document.getElementById('apkDownloadBtn');
+  const prog = document.getElementById('apkProgress');
+  if (btn) { btn.disabled = true; btn.textContent = '下载中…'; }
+  if (prog) prog.style.display = 'block';
+  if (window.Android && window.Android.downloadAndInstallApk) {
+    window.Android.downloadAndInstallApk('https://lxsy7.github.io/jizhangben/app.apk');
+  } else {
+    downloadAPK();
+  }
+}
+
 function downloadAPK() {
+  // In Android WebView, use native download + auto install
+  if (window.Android && window.Android.downloadAndInstallApk) {
+    toast('开始下载安装包…');
+    window.Android.downloadAndInstallApk('https://lxsy7.github.io/jizhangben/app.apk');
+    return;
+  }
+  // Fallback for browser: direct download
   const btn = document.getElementById('installAPK');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ 下载中…'; }
-  const url = 'https://lxsy7.github.io/jizhangben/app.apk';
-  fetch(url).then(r => {
+  fetch('https://lxsy7.github.io/jizhangben/app.apk').then(r => {
     if (!r.ok) throw new Error('下载失败');
     return r.blob();
   }).then(blob => {
@@ -3633,12 +3693,28 @@ function downloadAPK() {
     toast('✅ 下载完成，打开文件即可安装');
     if (btn) { btn.disabled = false; btn.textContent = '📦 下载安装包'; }
   }).catch(() => {
-    // fallback: 直接跳转下载
-    window.open(url, '_blank');
+    window.open('https://lxsy7.github.io/jizhangben/app.apk', '_blank');
     toast('请在下载管理中打开文件安装');
     if (btn) { btn.disabled = false; btn.textContent = '📦 下载安装包'; }
   });
 }
+
+// APK update progress callbacks (called from Java)
+window._onApkProgress = function(pct) {
+  const bar = document.getElementById('apkProgressBar');
+  const txt = document.getElementById('apkProgressText');
+  if (bar) bar.style.width = pct + '%';
+  if (txt) txt.textContent = pct + '%';
+};
+window._onApkDone = function() {
+  const txt = document.getElementById('apkProgressText');
+  if (txt) txt.textContent = '下载完成，正在安装…';
+};
+window._onApkError = function() {
+  toast('下载失败，请重试');
+  const btn = document.getElementById('apkDownloadBtn');
+  if (btn) { btn.disabled = false; btn.textContent = '📦 下载安装包'; }
+};
 
 // PWA 文件导入 — 统一入口，解决 iOS Safari PWA onchange 不触发问题
 function pickFile() {
