@@ -1,0 +1,14 @@
+{
+  "name": "个人记账本",
+  "short_name": "记账本",
+  "description": "微信&支付宝账单导入，自动分类统计，离线可用",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#4f6ef7",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
