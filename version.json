@@ -1,0 +1,15 @@
+{
+  "version": "1.4.0",
+  "date": "2026-06-23",
+  "note": "全面改进：Bug修复 + 性能优化 + 新功能",
+  "notes": [
+    "【Bug修复】RELEASE_NOTES语法错误、pasteZone引用错误、confirmImport event崩溃",
+    "【Bug修复】uid()改用crypto.randomUUID消除批量导入碰撞",
+    "【Bug修复】exportCSV不再污染全局排序、SW匹配规则精确化",
+    "【安全】JSON导入增加schema校验，防止损坏数据写入",
+    "【精度】引入roundMoney()统一浮点处理",
+    "【性能】趋势图改为Map预分组O(n+d)、deleteCategory批量写入",
+    "【新功能】批量选择+批量删除、删除撤销(5秒)、内联分类修改",
+    "【体验】Toast队列管理不再重叠、去重逻辑统一为公共函数"
+  ]
+}
